@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime Character Creator Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #ff6b9d;
+            --primary-light: #ff8fb3;
+            --secondary: #a78bfa;
+            --accent: #34d399;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --panel-bg: rgba(255, 255, 255, 0.95);
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .character-frame {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #characterCanvas {
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        #characterCanvas:hover {
+            transform: scale(1.02);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #c4b5fd);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(167, 139, 250, 0.4);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #6ee7b7);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(52, 211, 153, 0.4);
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            width: 400px;
+            background: var(--panel-bg);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            overflow-y: auto;
+            max-height: calc(100vh - 40px);
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .panel-header h1 {
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .panel-header p {
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .control-group h3 {
+            font-size: 16px;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group h3::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        .option-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+        }
+
+        .option-btn {
+            padding: 8px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+
+        .option-btn.active {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(255, 107, 157, 0.1), rgba(167, 139, 250, 0.1));
+        }
+
+        .color-picker-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .color-picker-row label {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+
+        input[type="color"] {
+            width: 40px;
+            height: 30px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .slider-control {
+            margin-bottom: 10px;
+        }
+
+        .slider-control label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.1);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+                padding: 10px;
+            }
+
+            .controls-panel {
+                width: 100%;
+                max-height: none;
+            }
+
+            .character-frame {
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .action-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .option-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Scrollbar Styling */
+        .controls-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .controls-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+        }
+
+        .controls-panel::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 3px;
+        }
+
+        .controls-panel::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--accent);
+        }
+
+        .notification.info {
+            border-left: 4px solid var(--secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Preview Section -->
+        <div class="preview-section">
+            <div class="character-frame">
+                <canvas id="characterCanvas" width="400" height="500"></canvas>
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="randomizeCharacter()">
+                    🎲 Randomize
+                </button>
+                <button class="btn btn-secondary" onclick="saveCharacterPNG()">
+                    💾 Save PNG
+                </button>
+                <button class="btn btn-accent" onclick="saveConfig()">
+                    ⚙️ Save Config
+                </button>
+                <button class="btn btn-secondary" onclick="loadConfig()">
+                    📂 Load Config
+                </button>
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <div class="panel-header">
+                <h1>✨ Anime Character Creator</h1>
+                <p>Design your unique anime character!</p>
+            </div>
+
+            <!-- Base Features -->
+            <div class="control-group">
+                <h3>Base Features</h3>
+                
+                <div class="slider-control">
+                    <label>Skin Tone</label>
+                    <input type="range" id="skinTone" min="0" max="100" value="50" oninput="updateCharacter()">
+                </div>
+
+                <div class="color-picker-row">
+                    <label>Custom Skin Color:</label>
+                    <input type="color" id="skinColor" value="#f5d0c5" onchange="updateCharacter()">
+                </div>
+            </div>
+
+            <!-- Hair -->
+            <div class="control-group">
+                <h3>Hair Style</h3>
+                <div class="option-grid" id="hairStyles">
+                    <button class="option-btn active" data-style="short" onclick="setHairStyle('short')">Short</button>
+                    <button class="option-btn" data-style="medium" onclick="setHairStyle('medium')">Medium</button>
+                    <button class="option-btn" data-style="long" onclick="setHairStyle('long')">Long</button>
+                    <button class="option-btn" data-style="ponytail" onclick="setHairStyle('ponytail')">Ponytail</button>
+                    <button class="option-btn" data-style="twintails" onclick="setHairStyle('twintails')">Twintails</button>
+                    <button class="option-btn" data-style="spiky" onclick="setHairStyle('spiky')">Spiky</button>
+                </div>
+                
+                <div class="color-picker-row" style="margin-top: 12px;">
+                    <label>Hair Color:</label>
+                    <input type="color" id="hairColor" value="#2d3748" onchange="updateCharacter()">
+                </div>
+            </div>
+
+            <!-- Eyes -->
+            <div class="control-group">
+                <h3>Eye Style</h3>
+                <div class="option-grid" id="eyeStyles">
+                    <button class="option-btn active" data-style="round" onclick="setEyeStyle('round')">Round</button>
+                    <button class="option-btn" data-style="almond" onclick="setEyeStyle('almond')">Almond</button>
+                    <button class="option-btn" data-style="narrow" onclick="setEyeStyle('narrow')">Narrow</button>
+                    <button class="option-btn" data-style="large" onclick="setEyeStyle('large')">Large</button>
+                </div>
+                
+                <div class="color-picker-row" style="margin-top: 12px;">
+                    <label>Eye Color:</label>
+                    <input type="color" id="eyeColor" value="#667eea" onchange="updateCharacter()">
+                </div>
+            </div>
+
+            <!-- Outfit -->
+            <div class="control-group">
+                <h3>Outfit</h3>
+                <div class="option-grid" id="outfitStyles">
+                    <button class="option-btn active" data-style="casual" onclick="setOutfitStyle('casual')">Casual</button>
+                    <button class="option-btn" data-style="school" onclick="setOutfitStyle('school')">School</button>
+                    <button class="option-btn" data-style="formal" onclick="setOutfitStyle('formal')">Formal</button>
+                    <button class="option-btn" data-style="sporty" onclick="setOutfitStyle('sporty')">Sporty</button>
+                    <button class="option-btn" data-style="fantasy" onclick="setOutfitStyle('fantasy')">Fantasy</button>
+                </div>
+                
+                <div class="color-picker-row" style="margin-top: 12px;">
+                    <label>Outfit Color:</label>
+                    <input type="color" id="outfitColor" value="#667eea" onchange="updateCharacter()">
+                </div>
+            </div>
+
+            <!-- Accessories -->
+            <div class="control-group">
+                <h3>Accessories</h3>
+                <div class="option-grid" id="accessories">
+                    <button class="option-btn" data-accessory="glasses" onclick="toggleAccessory('glasses')">👓 Glasses</button>
+                    <button class="option-btn" data-accessory="earrings" onclick="toggleAccessory('earrings')">💎 Earrings</button>
+                    <button class="option-btn" data-accessory="hat" onclick="toggleAccessory('hat')">🎩 Hat</button>
+                    <button class="option-btn" data-accessory="necklace" onclick="toggleAccessory('necklace')">📿 Necklace</button>
+                    <button class="option-btn" data-accessory="bow" onclick="toggleAccessory('bow')">🎀 Bow</button>
+                </div>
+            </div>
+
+            <!-- Background -->
+            <div class="control-group">
+                <h3>Background</h3>
+                <select id="backgroundType" onchange="updateCharacter()">
+                    <option value="solid">Solid Color</option>
+                    <option value="gradient" selected>Gradient</option>
+                    <option value="scene">Simple Scene</option>
+                </select>
+                
+                <div class="color-picker-row" style="margin-top: 12px;">
+                    <label>BG Color 1:</label>
+                    <input type="color" id="bgColor1" value="#e0e7ff" onchange="updateCharacter()">
+                </div>
+                
+                <div class="color-picker-row">
+                    <label>BG Color 2:</label>
+                    <input type="color" id="bgColor2" value="#f0f9ff" onchange="updateCharacter()">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Character state
+        const characterState = {
+            skinTone: 50,
+            skinColor: '#f5d0c5',
+            hairStyle: 'short',
+            hairColor: '#2d3748',
+            eyeStyle: 'round',
+            eyeColor: '#667eea',
+            outfitStyle: 'casual',
+            outfitColor: '#667eea',
+            accessories: [],
+            backgroundType: 'gradient',
+            bgColor1: '#e0e7ff',
+            bgColor2: '#f0f9ff'
+        };
+
+        // Initialize canvas
+        const canvas = document.getElementById('characterCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Hair style definitions
+        const hairStyles = {
+            short: {
+                front: [[200, 120], [180, 140], [160, 135], [140, 145], [120, 160], [140, 170], [160, 165], [180, 170], [200, 165], [220, 170], [240, 165], [260, 170], [280, 160], [260, 145], [240, 135], [220, 140]],
+                back: [[140, 160], [130, 200], [140, 220], [260, 220], [270, 200], [260, 160]],
+                bangs: [[200, 120], [185, 150], [170, 145], [155, 155], [200, 160], [245, 155], [230, 145], [215, 150]]
+            },
+            medium: {
+                front: [[200, 120], [175, 145], [150, 150], [130, 170], [120, 200], [140, 210], [160, 200], [180, 210], [200, 200], [220, 210], [240, 200], [260, 210], [280, 200], [270, 170], [250, 150], [225, 145]],
+                back: [[130, 170], [120, 240], [140, 280], [260, 280], [280, 240], [270, 170]],
+                bangs: [[200, 120], [180, 155], [160, 150], [145, 165], [200, 175], [255, 165], [240, 150], [220, 155]]
+            },
+            long: {
+                front: [[200, 120], [170, 150], [145, 160], [125, 185], [115, 220], [135, 230], [155, 220], [175, 230], [200, 220], [225, 230], [245, 220], [265, 230], [285, 220], [275, 185], [255, 160], [230, 150]],
+                back: [[125, 185], [110, 300], [140, 350], [260, 350], [290, 300], [275, 185]],
+                bangs: [[200, 120], [175, 160], [150, 155], [130, 175], [200, 185], [270, 175], [250, 155], [225, 160]]
+            },
+            ponytail: {
+                front: [[200, 120], [180, 145], [160, 140], [140, 155], [130, 175], [150, 180], [170, 175], [190, 180], [210, 175], [230, 180], [250, 175], [270, 180], [260, 155], [240, 140], [220, 145]],
+                back: [[140, 155], [135, 190], [150, 200], [250, 200], [265, 190], [260, 155]],
+                ponytail: [[200, 130], [180, 100], [170, 70], [180, 50], [200, 40], [220, 50], [230, 70], [220, 100], [200, 130]],
+                bangs: [[200, 120], [185, 150], [170, 145], [155, 155], [200, 160], [245, 155], [230, 145], [215, 150]]
+            },
+            twintails: {
+                front: [[200, 120], [180, 145], [160, 140], [140, 155], [130, 175], [150, 180], [170, 175], [190, 180], [210, 175], [230, 180], [250, 175], [270, 180], [260, 155], [240, 140], [220, 145]],
+                back: [[140, 155], [135, 190], [150, 200], [250, 200], [265, 190], [260, 155]],
+                leftTail: [[140, 160], [110, 180], [90, 220], [80, 270], [100, 280], [120, 250], [135, 200]],
+                rightTail: [[260, 160], [290, 180], [310, 220], [320, 270], [300, 280], [280, 250], [265, 200]],
+                bangs: [[200, 120], [185, 150], [170, 145], [155, 155], [200, 160], [245, 155], [230, 145], [215, 150]]
+            },
+            spiky: {
+                front: [[200, 110], [185, 140], [165, 135], [150, 150], [135, 140], [125, 160], [145, 170], [165, 160], [185, 170], [200, 160], [215, 170], [235, 160], [255, 170], [275, 160], [265, 140], [250, 150], [235, 135], [215, 140]],
+                back: [[135, 140], [120, 170], [130, 200], [270, 200], [280, 170], [265, 140]],
+                spikes: [[200, 110], [190, 80], [175, 60], [185, 70], [200, 50], [215, 70], [225, 60], [210, 80], [200, 110]],
+                bangs: [[200, 110], [185, 145], [170, 140], [155, 150], [200, 155], [245, 150], [230, 140], [215, 145]]
+            }
+        };
+
+        // Eye style definitions
+        const eyeStyles = {
+            round: { shape: 'ellipse', rx: 18, ry: 22 },
+            almond: { shape: 'almond', rx: 20, ry: 18 },
+            narrow: { shape: 'narrow', rx: 22, ry: 14 },
+            large: { shape: 'ellipse', rx: 24, ry: 26 }
+        };
+
+        // Outfit definitions
+        const outfitStyles = {
+            casual: { type: 'casual', collar: 'round' },
+            school: { type: 'school', collar: 'collar' },
+            formal: { type: 'formal', collar: 'vest' },
+            sporty: { type: 'sporty', collar: 'vneck' },
+            fantasy: { type: 'fantasy', collar: 'ornate' }
+        };
+
+        // Draw functions
+        function drawBackground() {
+            const bgType = characterState.backgroundType;
+            
+            if (bgType === 'solid') {
+                ctx.fillStyle = characterState.bgColor1;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else if (bgType === 'gradient') {
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, characterState.bgColor1);
+                gradient.addColorStop(1, characterState.bgColor2);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else if (bgType === 'scene') {
+                // Simple room scene
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, characterState.bgColor1);
+                gradient.addColorStop(0.6, characterState.bgColor2);
+                gradient.addColorStop(0.6, '#d4a574');
+                gradient.addColorStop(1, '#c4956a');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Window
+                ctx.fillStyle = '#87ceeb';
+                ctx.fillRect(50, 50, 80, 100);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(50, 50, 80, 100);
+                ctx.beginPath();
+                ctx.moveTo(90, 50);
+                ctx.lineTo(90, 150);
+                ctx.moveTo(50, 100);
+                ctx.lineTo(130, 100);
+                ctx.stroke();
+                
+                // Floor line
+                ctx.fillStyle = '#c4956a';
+                ctx.fillRect(0, 300, canvas.width, 200);
+            }
+        }
+
+        function getSkinColor() {
+            // Use custom color if significantly different from default
+            if (characterState.skinColor !== '#f5d0c5') {
+                return characterState.skinColor;
+            }
+            // Generate skin tone based on slider
+            const tone = characterState.skinTone;
+            const r = Math.round(245 - tone * 0.5);
+            const g = Math.round(208 - tone * 0.4);
+            const b = Math.round(197 - tone * 0.3);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function drawBody() {
+            const skinColor = getSkinColor();
+            
+            // Neck
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.ellipse(200, 260, 25, 30, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Shoulders and upper body
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.ellipse(200, 290, 70, 40, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawFace() {
+            const skinColor = getSkinColor();
+            
+            // Face shape
+            ctx.fillStyle = skinColor;
+            ctx.beginPath();
+            ctx.ellipse(200, 200, 85, 100, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Chin/jaw definition
+            ctx.beginPath();
+            ctx.moveTo(120, 180);
+            ctx.quadraticCurveTo(115, 240, 140, 280);
+            ctx.quadraticCurveTo(200, 310, 260, 280);
+            ctx.quadraticCurveTo(285, 240, 280, 180);
+            ctx.fill();
+            
+            // Blush
+            ctx.fillStyle = 'rgba(255, 150, 150, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(155, 230, 20, 12, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(245, 230, 20, 12, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawEyes() {
+            const eyeStyle = eyeStyles[characterState.eyeStyle];
+            const eyeColor = characterState.eyeColor;
+            const eyeY = 210;
+            const eyeSpacing = 45;
+            
+            // Left eye
+            drawSingleEye(200 - eyeSpacing, eyeY, eyeStyle, eyeColor, true);
+            // Right eye
+            drawSingleEye(200 + eyeSpacing, eyeY, eyeStyle, eyeColor, false);
+            
+            // Eyebrows
+            ctx.strokeStyle = adjustColor(characterState.hairColor, -30);
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            
+            // Left eyebrow
+            ctx.beginPath();
+            ctx.moveTo(200 - eyeSpacing - 15, eyeY - 25);
+            ctx.quadraticCurveTo(200 - eyeSpacing, eyeY - 30, 200 - eyeSpacing + 15, eyeY - 25);
+            ctx.stroke();
+            
+            // Right eyebrow
+            ctx.beginPath();
+            ctx.moveTo(200 + eyeSpacing - 15, eyeY - 25);
+            ctx.quadraticCurveTo(200 + eyeSpacing, eyeY - 30, 200 + eyeSpacing + 15, eyeY - 25);
+            ctx.stroke();
+        }
+
+        function drawSingleEye(x, y, style, color, isLeft) {
+            // Eye white
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            
+            if (style.shape === 'ellipse') {
+                ctx.ellipse(x, y, style.rx, style.ry, 0, 0, Math.PI * 2);
+            } else if (style.shape === 'almond') {
+                ctx.moveTo(x - style.rx, y);
+                ctx.quadraticCurveTo(x - style.rx/2, y - style.ry, x, y - style.ry * 0.8);
+                ctx.quadraticCurveTo(x + style.rx/2, y - style.ry, x + style.rx, y);
+                ctx.quadraticCurveTo(x + style.rx/2, y + style.ry, x, y + style.ry * 0.8);
+                ctx.quadraticCurveTo(x - style.rx/2, y + style.ry, x - style.rx, y);
+            } else if (style.shape === 'narrow') {
+                ctx.ellipse(x, y, style.rx, style.ry, 0, 0, Math.PI * 2);
+            }
+            ctx.fill();
+            
+            // Iris
+            const gradient = ctx.createRadialGradient(x, y, 2, x, y, style.rx);
+            gradient.addColorStop(0, lightenColor(color, 30));
+            gradient.addColorStop(0.5, color);
+            gradient.addColorStop(1, darkenColor(color, 30));
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, style.rx * 0.6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupil
+            ctx.fillStyle = '#1a1a2e';
+            ctx.beginPath();
+            ctx.arc(x, y, style.rx * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            ctx.arc(x - style.rx * 0.25, y - style.ry * 0.25, style.rx * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Secondary highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.arc(x + style.rx * 0.2, y + style.ry * 0.2, style.rx * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eye outline
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        function drawNose() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.beginPath();
+            ctx.moveTo(200, 235);
+            ctx.lineTo(197, 245);
+            ctx.lineTo(203, 245);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawMouth() {
+            ctx.strokeStyle = '#d48a9a';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.arc(200, 255, 12, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+            
+            // Slight fill for depth
+            ctx.fillStyle = 'rgba(212, 138, 154, 0.2)';
+            ctx.beginPath();
+            ctx.arc(200, 255, 12, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.lineTo(200, 258);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawHair() {
+            const hairStyle = hairStyles[characterState.hairStyle];
+            const hairColor = characterState.hairColor;
+            const hairColorDark = darkenColor(hairColor, 20);
+            const hairColorLight = lightenColor(hairColor, 15);
+            
+            // Back hair
+            if (hairStyle.back) {
+                const gradient = ctx.createLinearGradient(200, 160, 200, 280);
+                gradient.addColorStop(0, hairColor);
+                gradient.addColorStop(1, hairColorDark);
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.moveTo(hairStyle.back[0][0], hairStyle.back[0][1]);
+                for (let i = 1; i < hairStyle.back.length; i++) {
+                    ctx.lineTo(hairStyle.back[i][0], hairStyle.back[i][1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Ponytail (if applicable)
+            if (hairStyle.ponytail) {
+                const gradient = ctx.createLinearGradient(200, 50, 200, 130);
+                gradient.addColorStop(0, hairColorLight);
+                gradient.addColorStop(1, hairColor);
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.moveTo(hairStyle.ponytail[0][0], hairStyle.ponytail[0][1]);
+                for (let i = 1; i < hairStyle.ponytail.length; i++) {
+                    ctx.lineTo(hairStyle.ponytail[i][0], hairStyle.ponytail[i][1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                // Hair tie
+                ctx.fillStyle = '#2d3748';
+                ctx.fillRect(195, 125, 10, 8);
+            }
+            
+            // Twintails (if applicable)
+            if (hairStyle.leftTail) {
+                const gradient = ctx.createLinearGradient(100, 180, 100, 270);
+                gradient.addColorStop(0, hairColor);
+                gradient.addColorStop(1, hairColorDark);
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.moveTo(hairStyle.leftTail[0][0], hairStyle.leftTail[0][1]);
+                for (let i = 1; i < hairStyle.leftTail.length; i++) {
+                    ctx.lineTo(hairStyle.leftTail[i][0], hairStyle.leftTail[i][1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            if (hairStyle.rightTail) {
+                const gradient = ctx.createLinearGradient(300, 180, 300, 270);
+                gradient.addColorStop(0, hairColor);
+                gradient.addColorStop(1, hairColorDark);
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.moveTo(hairStyle.rightTail[0][0], hairStyle.rightTail[0][1]);
+                for (let i = 1; i < hairStyle.rightTail.length; i++) {
+                    ctx.lineTo(hairStyle.rightTail[i][0], hairStyle.rightTail[i][1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Spikes (if applicable)
+            if (hairStyle.spikes) {
+                const gradient = ctx.createLinearGradient(200, 50, 200, 110);
+                gradient.addColorStop(0, hairColorLight);
+                gradient.addColorStop(1, hairColor);
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.moveTo(hairStyle.spikes[0][0], hairStyle.spikes[0][1]);
+                for (let i = 1; i < hairStyle.spikes.length; i++) {
+                    ctx.lineTo(hairStyle.spikes[i][0], hairStyle.spikes[i][1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Front hair/bangs
+            const gradient = ctx.createLinearGradient(200, 120, 200, 180);
+            gradient.addColorStop(0, hairColorLight);
+            gradient.addColorStop(1, hairColor);
+            ctx.fillStyle = gradient;
+            
+            ctx.beginPath();
+            ctx.moveTo(hairStyle.front[0][0], hairStyle.front[0][1]);
+            for (let i = 1; i < hairStyle.front.length; i++) {
+                ctx.lineTo(hairStyle.front[i][0], hairStyle.front[i][1]);
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Bangs detail
+            if (hairStyle.bangs) {
+                ctx.fillStyle = hairColor;
+                ctx.beginPath();
+                ctx.moveTo(hairStyle.bangs[0][0], hairStyle.bangs[0][1]);
+                for (let i = 1; i < hairStyle.bangs.length; i++) {
+                    ctx.lineTo(hairStyle.bangs[i][0], hairStyle.bangs[i][1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Hair shine
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(170, 140, 15, 5, -0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawOutfit() {
+            const outfitStyle = outfitStyles[characterState.outfitStyle];
+            const outfitColor = characterState.outfitColor;
+            const outfitColorDark = darkenColor(outfitColor, 25);
+            const outfitColorLight = lightenColor(outfitColor, 15);
+            
+            ctx.fillStyle = outfitColor;
+            
+            if (outfitStyle.type === 'casual') {
+                // Casual t-shirt
+                ctx.beginPath();
+                ctx.moveTo(130, 285);
+                ctx.quadraticCurveTo(140, 320, 150, 380);
+                ctx.lineTo(250, 380);
+                ctx.quadraticCurveTo(260, 320, 270, 285);
+                ctx.quadraticCurveTo(240, 295, 200, 295);
+                ctx.quadraticCurveTo(160, 295, 130, 285);
+                ctx.fill();
+                
+                // Neckline
+                ctx.fillStyle = outfitColorDark;
+                ctx.beginPath();
+                ctx.ellipse(200, 285, 25, 15, 0, Math.PI, 0);
+                ctx.fill();
+                
+            } else if (outfitStyle.type === 'school') {
+                // School uniform with collar
+                ctx.beginPath();
+                ctx.moveTo(130, 285);
+                ctx.lineTo(145, 350);
+                ctx.lineTo(155, 400);
+                ctx.lineTo(245, 400);
+                ctx.lineTo(255, 350);
+                ctx.lineTo(270, 285);
+                ctx.lineTo(230, 295);
+                ctx.lineTo(230, 320);
+                ctx.lineTo(200, 310);
+                ctx.lineTo(170, 320);
+                ctx.lineTo(170, 295);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Collar
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(170, 290);
+                ctx.lineTo(200, 305);
+                ctx.lineTo(230, 290);
+                ctx.lineTo(235, 315);
+                ctx.lineTo(200, 300);
+                ctx.lineTo(165, 315);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Tie/Bow
+                ctx.fillStyle = '#c53030';
+                ctx.beginPath();
+                ctx.moveTo(200, 305);
+                ctx.lineTo(185, 330);
+                ctx.lineTo(200, 325);
+                ctx.lineTo(215, 330);
+                ctx.closePath();
+                ctx.fill();
+                
+            } else if (outfitStyle.type === 'formal') {
+                // Formal vest/shirt
+                ctx.beginPath();
+                ctx.moveTo(135, 285);
+                ctx.quadraticCurveTo(145, 330, 155, 380);
+                ctx.lineTo(245, 380);
+                ctx.quadraticCurveTo(255, 330, 265, 285);
+                ctx.lineTo(235, 290);
+                ctx.lineTo(235, 380);
+                ctx.lineTo(165, 380);
+                ctx.lineTo(165, 290);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Vest detail
+                ctx.fillStyle = outfitColorDark;
+                ctx.fillRect(170, 290, 60, 90);
+                
+                // Buttons
+                ctx.fillStyle = '#ffd700';
+                for (let i = 0; i < 4; i++) {
+                    ctx.beginPath();
+                    ctx.arc(200, 310 + i * 20, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+            } else if (outfitStyle.type === 'sporty') {
+                // Sporty jacket
+                ctx.beginPath();
+                ctx.moveTo(125, 285);
+                ctx.quadraticCurveTo(135, 330, 145, 380);
+                ctx.lineTo(255, 380);
+                ctx.quadraticCurveTo(265, 330, 275, 285);
+                ctx.quadraticCurveTo(245, 295, 200, 295);
+                ctx.quadraticCurveTo(155, 295, 125, 285);
+                ctx.fill();
+                
+                // Zipper line
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(200, 295);
+                ctx.lineTo(200, 380);
+                ctx.stroke();
+                
+                // Stripe detail
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(145, 320, 15, 40);
+                ctx.fillRect(240, 320, 15, 40);
+                
+            } else if (outfitStyle.type === 'fantasy') {
+                // Fantasy outfit
+                ctx.fillStyle = outfitColor;
+                ctx.beginPath();
+                ctx.moveTo(140, 285);
+                ctx.quadraticCurveTo(130, 330, 120, 380);
+                ctx.lineTo(160, 400);
+                ctx.quadraticCurveTo(200, 390, 240, 400);
+                ctx.lineTo(280, 380);
+                ctx.quadraticCurveTo(270, 330, 260, 285);
+                ctx.quadraticCurveTo(230, 300, 200, 295);
+                ctx.quadraticCurveTo(170, 300, 140, 285);
+                ctx.fill();
+                
+                // Ornate collar
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.moveTo(170, 290);
+                ctx.quadraticCurveTo(200, 270, 230, 290);
+                ctx.quadraticCurveTo(220, 310, 200, 300);
+                ctx.quadraticCurveTo(180, 310, 170, 290);
+                ctx.fill();
+                
+                // Decorative patterns
+                ctx.fillStyle = outfitColorLight;
+                ctx.beginPath();
+                ctx.arc(170, 330, 8, 0, Math.PI * 2);
+                ctx.arc(230, 330, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawAccessories() {
+            const accessories = characterState.accessories;
+            
+            // Glasses
+            if (accessories.includes('glasses')) {
+                ctx.strokeStyle = '#2d3748';
+                ctx.lineWidth = 3;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                
+                // Left lens
+                ctx.beginPath();
+                ctx.ellipse(155, 210, 22, 18, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Right lens
+                ctx.beginPath();
+                ctx.ellipse(245, 210, 22, 18, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Bridge
+                ctx.beginPath();
+                ctx.moveTo(177, 210);
+                ctx.quadraticCurveTo(200, 205, 223, 210);
+                ctx.stroke();
+                
+                // Arms
+                ctx.beginPath();
+                ctx.moveTo(133, 210);
+                ctx.lineTo(110, 215);
+                ctx.moveTo(267, 210);
+                ctx.lineTo(290, 215);
+                ctx.stroke();
+            }
+            
+            // Earrings
+            if (accessories.includes('earrings')) {
+                ctx.fillStyle = '#ffd700';
+                
+                // Left earring
+                ctx.beginPath();
+                ctx.arc(125, 250, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(125, 255);
+                ctx.lineTo(125, 270);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(125, 273, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Right earring
+                ctx.beginPath();
+                ctx.arc(275, 250, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(275, 255);
+                ctx.lineTo(275, 270);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(275, 273, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Hat
+            if (accessories.includes('hat')) {
+                ctx.fillStyle = characterState.outfitColor;
+                ctx.strokeStyle = darkenColor(characterState.outfitColor, 30);
+                ctx.lineWidth = 2;
+                
+                // Hat brim
+                ctx.beginPath();
+                ctx.ellipse(200, 115, 70, 15, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Hat crown
+                ctx.fillStyle = characterState.outfitColor;
+                ctx.beginPath();
+                ctx.moveTo(145, 115);
+                ctx.quadraticCurveTo(140, 60, 200, 50);
+                ctx.quadraticCurveTo(260, 60, 255, 115);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Hat band
+                ctx.fillStyle = '#2d3748';
+                ctx.fillRect(145, 105, 110, 15);
+                
+                // Hat decoration
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(200, 112, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Necklace
+            if (accessories.includes('necklace')) {
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.ellipse(200, 295, 40, 20, 0, 0.1 * Math.PI, 0.9 * Math.PI);
+                ctx.stroke();
+                
+                // Pendant
+                ctx.fillStyle = '#667eea';
+                ctx.beginPath();
+                ctx.moveTo(200, 315);
+                ctx.lineTo(192, 305);
+                ctx.lineTo(200, 295);
+                ctx.lineTo(208, 305);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            // Bow
+            if (accessories.includes('bow')) {
+                ctx.fillStyle = '#e53e3e';
+                
+                // Left loop
+                ctx.beginPath();
+                ctx.ellipse(175, 290, 15, 12, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Right loop
+                ctx.beginPath();
+                ctx.ellipse(225, 290, 15, 12, 0.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Center knot
+                ctx.beginPath();
+                ctx.arc(200, 290, 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Tails
+                ctx.beginPath();
+                ctx.moveTo(194, 295);
+                ctx.quadraticCurveTo(185, 320, 180, 335);
+                ctx.lineTo(188, 335);
+                ctx.quadraticCurveTo(193, 320, 197, 300);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(206, 295);
+                ctx.quadraticCurveTo(215, 320, 220, 335);
+                ctx.lineTo(212, 335);
+                ctx.quadraticCurveTo(207, 320, 203, 300);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        // Utility functions
+        function darkenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.max((num >> 16) - amt, 0);
+            const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
+            const B = Math.max((num & 0x0000FF) - amt, 0);
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min((num >> 16) + amt, 255);
+            const G = Math.min((num >> 8 & 0x00FF) + amt, 255);
+            const B = Math.min((num & 0x0000FF) + amt, 255);
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        function adjustColor(color, amount) {
+            return amount >= 0 ? lightenColor(color, amount) : darkenColor(color, -amount);
+        }
+
+        // Main draw function
+        function drawCharacter() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            drawBody();
+            drawFace();
+            drawEyes();
+            drawNose();
+            drawMouth();
+            drawHair();
+            drawOutfit();
+            drawAccessories();
+        }
+
+        // Update functions
+        function updateCharacter() {
+            characterState.skinTone = parseInt(document.getElementById('skinTone').value);
+            characterState.skinColor = document.getElementById('skinColor').value;
+            characterState.hairColor = document.getElementById('hairColor').value;
+            characterState.eyeColor = document.getElementById('eyeColor').value;
+            characterState.outfitColor = document.getElementById('outfitColor').value;
+            characterState.backgroundType = document.getElementById('backgroundType').value;
+            characterState.bgColor1 = document.getElementById('bgColor1').value;
+            characterState.bgColor2 = document.getElementById('bgColor2').value;
+            
+            drawCharacter();
+        }
+
+        function setHairStyle(style) {
+            characterState.hairStyle = style;
+            updateButtons('hairStyles', style);
+            drawCharacter();
+        }
+
+        function setEyeStyle(style) {
+            characterState.eyeStyle = style;
+            updateButtons('eyeStyles', style);
+            drawCharacter();
+        }
+
+        function setOutfitStyle(style) {
+            characterState.outfitStyle = style;
+            updateButtons('outfitStyles', style);
+            drawCharacter();
+        }
+
+        function toggleAccessory(accessory) {
+            const index = characterState.accessories.indexOf(accessory);
+            if (index > -1) {
+                characterState.accessories.splice(index, 1);
+                document.querySelector(`[data-accessory="${accessory}"]`).classList.remove('active');
+            } else {
+                characterState.accessories.push(accessory);
+                document.querySelector(`[data-accessory="${accessory}"]`).classList.add('active');
+            }
+            drawCharacter();
+        }
+
+        function updateButtons(containerId, activeValue) {
+            const container = document.getElementById(containerId);
+            const buttons = container.getElementsByClassName('option-btn');
+            for (let btn of buttons) {
+                btn.classList.remove('active');
+                if (btn.dataset.style === activeValue) {
+                    btn.classList.add('active');
+                }
+            }
+        }
+
+        function randomizeCharacter() {
+            // Random hair
+            const hairStylesList = ['short', 'medium', 'long', 'ponytail', 'twintails', 'spiky'];
+            const randomHair = hairStylesList[Math.floor(Math.random() * hairStylesList.length)];
+            setHairStyle(randomHair);
+            document.getElementById('hairColor').value = getRandomColor();
+            
+            // Random eyes
+            const eyeStylesList = ['round', 'almond', 'narrow', 'large'];
+            const randomEyes = eyeStylesList[Math.floor(Math.random() * eyeStylesList.length)];
+            setEyeStyle(randomEyes);
+            document.getElementById('eyeColor').value = getRandomColor();
+            
+            // Random outfit
+            const outfitStylesList = ['casual', 'school', 'formal', 'sporty', 'fantasy'];
+            const randomOutfit = outfitStylesList[Math.floor(Math.random() * outfitStylesList.length)];
+            setOutfitStyle(randomOutfit);
+            document.getElementById('outfitColor').value = getRandomColor();
+            
+            // Random skin tone
+            const randomSkinTone = Math.floor(Math.random() * 100);
+            document.getElementById('skinTone').value = randomSkinTone;
+            
+            // Random accessories (0-3)
+            characterState.accessories = [];
+            document.querySelectorAll('[data-accessory]').forEach(btn => btn.classList.remove('active'));
+            const numAccessories = Math.floor(Math.random() * 4);
+            const accessoryList = ['glasses', 'earrings', 'hat', 'necklace', 'bow'];
+            const shuffled = accessoryList.sort(() => 0.5 - Math.random());
+            for (let i = 0; i < numAccessories; i++) {
+                toggleAccessory(shuffled[i]);
+            }
+            
+            // Random background
+            const bgTypes = ['solid', 'gradient', 'scene'];
+            document.getElementById('backgroundType').value = bgTypes[Math.floor(Math.random() * bgTypes.length)];
+            document.getElementById('bgColor1').value = getRandomPastelColor();
+            document.getElementById('bgColor2').value = getRandomPastelColor();
+            
+            updateCharacter();
+            showNotification('New random character generated! ✨', 'success');
+        }
+
+        function getRandomColor() {
+            const colors = ['#2d3748', '#744210', '#c53030', '#dd6b20', '#d69e2e', '#38a169', '#319795', '#3182ce', '#667eea', '#805ad5', '#d53f8c', '#e53e3e'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        function getRandomPastelColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 70%, 85%)`;
+        }
+
+        // Save/Load functions
+        function saveCharacterPNG() {
+            try {
+                const link = document.createElement('a');
+                link.download = `anime-character-${Date.now()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showNotification('Character saved as PNG! 🎨', 'success');
+            } catch (error) {
+                showNotification('Error saving image. Please try again.', 'info');
+            }
+        }
+
+        function saveConfig() {
+            try {
+                localStorage.setItem('animeCharacterConfig', JSON.stringify(characterState));
+                showNotification('Configuration saved! ⚙️', 'success');
+            } catch (error) {
+                showNotification('Error saving configuration.', 'info');
+            }
+        }
+
+        function loadConfig() {
+            try {
+                const saved = localStorage.getItem('animeCharacterConfig');
+                if (saved) {
+                    const config = JSON.parse(saved);
+                    
+                    // Apply saved configuration
+                    characterState.skinTone = config.skinTone || 50;
+                    characterState.skinColor = config.skinColor || '#f5d0c5';
+                    characterState.hairStyle = config.hairStyle || 'short';
+                    characterState.hairColor = config.hairColor || '#2d3748';
+                    characterState.eyeStyle = config.eyeStyle || 'round';
+                    characterState.eyeColor = config.eyeColor || '#667eea';
+                    characterState.outfitStyle = config.outfitStyle || 'casual';
+                    characterState.outfitColor = config.outfitColor || '#667eea';
+                    characterState.accessories = config.accessories || [];
+                    characterState.backgroundType = config.backgroundType || 'gradient';
+                    characterState.bgColor1 = config.bgColor1 || '#e0e7ff';
+                    characterState.bgColor2 = config.bgColor2 || '#f0f9ff';
+                    
+                    // Update UI
+                    document.getElementById('skinTone').value = characterState.skinTone;
+                    document.getElementById('skinColor').value = characterState.skinColor;
+                    document.getElementById('hairColor').value = characterState.hairColor;
+                    document.getElementById('eyeColor').value = characterState.eyeColor;
+                    document.getElementById('outfitColor').value = characterState.outfitColor;
+                    document.getElementById('backgroundType').value = characterState.backgroundType;
+                    document.getElementById('bgColor1').value = characterState.bgColor1;
+                    document.getElementById('bgColor2').value = characterState.bgColor2;
+                    
+                    // Update button states
+                    updateButtons('hairStyles', characterState.hairStyle);
+                    updateButtons('eyeStyles', characterState.eyeStyle);
+                    updateButtons('outfitStyles', characterState.outfitStyle);
+                    
+                    // Update accessories
+                    document.querySelectorAll('[data-accessory]').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (characterState.accessories.includes(btn.dataset.accessory)) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    
+                    drawCharacter();
+                    showNotification('Configuration loaded! 📂', 'success');
+                } else {
+                    showNotification('No saved configuration found.', 'info');
+                }
+            } catch (error) {
+                showNotification('Error loading configuration.', 'info');
+            }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Auto-load saved config on page load
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('animeCharacterConfig');
+            if (saved) {
+                loadConfig();
+            } else {
+                randomizeCharacter();
+            }
+        });
+    </script>
+</body>
+</html>
